@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useEnsAddress } from 'wagmi';
 
 interface AllowanceData {
   snapshot_date: string;
@@ -13,10 +14,26 @@ interface AllowanceData {
 }
 
 export default function AllowanceForm() {
-  const [walletAddress, setWalletAddress] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [resolvedAddress, setResolvedAddress] = useState('');
   const [allowanceData, setAllowanceData] = useState<AllowanceData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
+  const { data: ensAddress } = useEnsAddress({ name: inputValue });
+
+  useEffect(() => {
+    if (ensAddress) {
+      setResolvedAddress(ensAddress);
+    } else if (!inputValue.includes('.eth')) {
+      setResolvedAddress(inputValue.trim());
+    }
+  }, [ensAddress, inputValue]);
+
+  useEffect(() => {
+    if (resolvedAddress) {
+      fetchAllowance(resolvedAddress);
+    }
+  }, [resolvedAddress]);
 
   async function fetchAllowance(address: string) {
     setIsLoading(true);
@@ -29,7 +46,6 @@ export default function AllowanceForm() {
         return response.json();
       })
       .then(data => {
-        console.log(data);
         if (data.length > 0) {
           setAllowanceData(data[0]);
         } else {
@@ -46,7 +62,6 @@ export default function AllowanceForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchAllowance(walletAddress);
   };
 
   return (
@@ -55,12 +70,12 @@ export default function AllowanceForm() {
       <form onSubmit={handleSubmit} className="flex flex-col space-y-2">
         <input
           type="text"
-          value={walletAddress}
-          onChange={(e) => setWalletAddress(e.target.value)}
-          placeholder="Wallet Address"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Wallet Address or ENS Name"
           className="p-2 border border-gray-300 rounded-md"
         />
-        <button type="submit" className="p-2 bg-blue-500 text-white rounded-md">
+        <button type="submit" className="p-2 bg-blue-500 text-white rounded-md" disabled={isLoading}>
           {isLoading ? 'Loading...' : 'Check Allowance'}
         </button>
       </form>
@@ -73,7 +88,7 @@ export default function AllowanceForm() {
         </div>
       )}
       {!isLoading && dataFetched && !allowanceData && (
-        <div>No allowance data found for {walletAddress}</div>
+        <div>No allowance data found for {resolvedAddress}</div>
       )}
     </div>
   );
