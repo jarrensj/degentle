@@ -65,30 +65,33 @@ export default function AllowanceForm() {
   };
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Check Allowance</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-2">
+    <div className="space-y-6 px-4 py-5 sm:p-6 bg-white shadow sm:rounded-lg">
+      <h1 className="text-3xl font-semibold text-gray-900 sm:text-4xl">Check Allowance</h1>
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-3">
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Wallet Address or ENS Name"
-          className="p-2 border border-gray-300 rounded-md"
+          className="p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
-        <button type="submit" className="p-2 bg-blue-500 text-white rounded-md" disabled={isLoading}>
+        <button
+          type="submit"
+          className="p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-blue-300"
+          disabled={isLoading}
+        >
           {isLoading ? 'Loading...' : 'Check Allowance'}
         </button>
       </form>
       {!isLoading && dataFetched && allowanceData && (
-        <div className="space-y-2">
-          <div>Display Name: {allowanceData.display_name}</div>
-          <div>Tip Allowance: {allowanceData.tip_allowance}</div>
-          <div>Remaining Allowance: {allowanceData.remaining_allowance}</div>
-          <div>Snapshot Date: {allowanceData.snapshot_date}</div>
+        <div className="space-y-3">
+          <div className="text-lg"><span className="font-medium">Display Name:</span> {allowanceData.display_name}</div>
+          <div className="text-lg"><span className="font-medium">Allowance:</span> {allowanceData.tip_allowance}</div>
+          <div className="text-lg"><span className="font-medium">Remaining Allowance:</span> {allowanceData.remaining_allowance}</div>
         </div>
       )}
       {!isLoading && dataFetched && !allowanceData && (
-        <div>No allowance data found for {resolvedAddress}</div>
+        <div className="text-lg text-red-500">No allowance data found for {resolvedAddress}</div>
       )}
     </div>
   );
