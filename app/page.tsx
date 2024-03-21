@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Disclaimer from "../components/Disclaimer";
 import Calculator from "@/components/Calculator";
+import AllowanceForm from "@/components/AllowanceForm";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <h1 className="text-4xl font-bold mb-8">sup</h1>
       <Disclaimer />
       <Calculator />
+      <AllowanceForm />
     </main>
   );
 }
