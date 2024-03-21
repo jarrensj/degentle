@@ -16,9 +16,11 @@ export default function AllowanceForm() {
   const [walletAddress, setWalletAddress] = useState('');
   const [allowanceData, setAllowanceData] = useState<AllowanceData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [dataFetched, setDataFetched] = useState(false);
 
   async function fetchAllowance(address: string) {
     setIsLoading(true);
+    setDataFetched(false);
     fetch(`/api/allowance?address=${address}`)
       .then(response => {
         if (!response.ok) {
@@ -33,9 +35,11 @@ export default function AllowanceForm() {
         } else {
           setAllowanceData(null);
         }
+        setDataFetched(true);
       })
       .catch(error => {
         console.error('There was a problem with your fetch operation:', error);
+        setDataFetched(true);
       })
       .finally(() => setIsLoading(false));
   }
@@ -60,13 +64,16 @@ export default function AllowanceForm() {
           {isLoading ? 'Loading...' : 'Check Allowance'}
         </button>
       </form>
-      {allowanceData && (
+      {!isLoading && dataFetched && allowanceData && (
         <div className="space-y-2">
           <div>Display Name: {allowanceData.display_name}</div>
           <div>Tip Allowance: {allowanceData.tip_allowance}</div>
           <div>Remaining Allowance: {allowanceData.remaining_allowance}</div>
           <div>Snapshot Date: {allowanceData.snapshot_date}</div>
         </div>
+      )}
+      {!isLoading && dataFetched && !allowanceData && (
+        <div>No allowance data found for {walletAddress}</div>
       )}
     </div>
   );
