@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useEnsAddress } from 'wagmi';
 
 interface AllowanceData {
@@ -15,25 +15,16 @@ interface AllowanceData {
 
 export default function AllowanceForm() {
   const [inputValue, setInputValue] = useState('');
-  const [resolvedAddress, setResolvedAddress] = useState('');
+  const [validationMessage, setValidationMessage] = useState('');
   const [allowanceData, setAllowanceData] = useState<AllowanceData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
   const { data: ensAddress } = useEnsAddress({ name: inputValue });
 
-  useEffect(() => {
-    if (ensAddress) {
-      setResolvedAddress(ensAddress);
-    } else if (!inputValue.includes('.eth')) {
-      setResolvedAddress(inputValue.trim());
-    }
-  }, [ensAddress, inputValue]);
-
-  useEffect(() => {
-    if (resolvedAddress) {
-      fetchAllowance(resolvedAddress);
-    }
-  }, [resolvedAddress]);
+  function isValidAddressOrENS(address: string): boolean {
+    // simple check for now to see if it's an ENS name or a wallet address
+    return address.includes('.eth') || address.length === 42;
+  }
 
   async function fetchAllowance(address: string) {
     setIsLoading(true);
@@ -62,6 +53,14 @@ export default function AllowanceForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    let addressToQuery = ensAddress || inputValue.trim();
+    if (isValidAddressOrENS(addressToQuery)) {
+      setValidationMessage('');
+      fetchAllowance(addressToQuery);
+    }
+    else {
+      setValidationMessage('Invalid address or ENS name. Fix and try again.');
+    }
   };
 
   return (
@@ -75,6 +74,7 @@ export default function AllowanceForm() {
           placeholder="Wallet Address or ENS Name"
           className="p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
+        {validationMessage && <div className="text-sm text-red-500">{validationMessage}</div>}
         <button
           type="submit"
           className="p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-blue-300"
@@ -85,13 +85,14 @@ export default function AllowanceForm() {
       </form>
       {!isLoading && dataFetched && allowanceData && (
         <div className="space-y-3">
+          <div className="text-xs">Result for: {allowanceData.wallet_address}</div>
           <div className="text-lg"><span className="font-medium">Display Name:</span> {allowanceData.display_name}</div>
           <div className="text-lg"><span className="font-medium">Allowance:</span> {allowanceData.tip_allowance}</div>
           <div className="text-lg"><span className="font-medium">Remaining Allowance:</span> {allowanceData.remaining_allowance}</div>
         </div>
       )}
       {!isLoading && dataFetched && !allowanceData && (
-        <div className="text-lg text-red-500">No allowance data found for {resolvedAddress}</div>
+        <div className="text-lg text-red-500">No allowance data found.</div>
       )}
     </div>
   );
