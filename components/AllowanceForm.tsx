@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useEnsAddress } from 'wagmi';
 
 interface AllowanceData {
@@ -19,35 +19,28 @@ export default function AllowanceForm() {
   const [allowanceData, setAllowanceData] = useState<AllowanceData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
-  const { data: ensAddress } = useEnsAddress({ name: inputValue });
+  const [isEnsResolving, setIsEnsResolving] = useState(false);
+  const { data: ensAddress, isLoading: isEnsLoading } = useEnsAddress({ name: inputValue });
+
+  useEffect(() => {
+    setIsEnsResolving(isEnsLoading);
+  }, [isEnsLoading]);
 
   function isValidAddressOrENS(address: string): boolean {
-    // simple check for now to see if it's an ENS name or a wallet address
     return address.includes('.eth') || address.length === 42;
   }
 
   async function fetchAllowance(address: string) {
     setIsLoading(true);
     setDataFetched(false);
+    console.log('Fetching allowance data for:', address);
     fetch(`/api/allowance?address=${address}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
+      .then(response => response.json())
       .then(data => {
-        if (data.length > 0) {
-          setAllowanceData(data[0]);
-        } else {
-          setAllowanceData(null);
-        }
+        setAllowanceData(data.length > 0 ? data[0] : null);
         setDataFetched(true);
       })
-      .catch(error => {
-        console.error('There was a problem with your fetch operation:', error);
-        setDataFetched(true);
-      })
+      .catch(error => console.error('There was a problem with your fetch operation:', error))
       .finally(() => setIsLoading(false));
   }
 
@@ -57,11 +50,15 @@ export default function AllowanceForm() {
     if (isValidAddressOrENS(addressToQuery)) {
       setValidationMessage('');
       fetchAllowance(addressToQuery);
-    }
-    else {
+    } else {
       setValidationMessage('Invalid address or ENS name. Fix and try again.');
     }
   };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+    setValidationMessage('');
+  }
 
   return (
     <div className="space-y-6 px-4 py-5 sm:p-6 bg-white shadow sm:rounded-lg">
@@ -70,15 +67,16 @@ export default function AllowanceForm() {
         <input
           type="text"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={handleInputChange}
           placeholder="Wallet Address or ENS Name"
           className="p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
         />
         {validationMessage && <div className="text-sm text-red-500">{validationMessage}</div>}
+        {!isEnsResolving && ensAddress && <div className="text-sm text-green-500">Resolved to: {ensAddress}</div>}
         <button
           type="submit"
-          className="p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-blue-300"
-          disabled={isLoading}
+          className={`p-3 text-white rounded-md ${isEnsResolving || isLoading ? 'bg-blue-300' : 'bg-blue-500 hover:bg-blue-600'}`}
+          disabled={isLoading || isEnsResolving}
         >
           {isLoading ? 'Loading...' : 'Check Allowance'}
         </button>
