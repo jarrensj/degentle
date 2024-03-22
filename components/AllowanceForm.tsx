@@ -20,7 +20,7 @@ export default function AllowanceForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
   const [isEnsResolving, setIsEnsResolving] = useState(false);
-  const { data: ensAddress, isLoading: isEnsLoading } = useEnsAddress({ name: inputValue });
+  const { data: ensAddress, isLoading: isEnsLoading } = useEnsAddress({ name: inputValue.toLowerCase() });
 
   useEffect(() => {
     setIsEnsResolving(isEnsLoading);
